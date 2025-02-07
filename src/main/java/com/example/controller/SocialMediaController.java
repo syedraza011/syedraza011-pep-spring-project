@@ -1,6 +1,9 @@
 package com.example.controller;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.*;
+import com.example.entity.Account;
+import com.example.entity.Message;
+import com.example.service.AccountService;
+import com.example.service.MessageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,12 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.example.entity.Account;
-import com.example.entity.Message;
-import com.example.service.AccountService;
-import com.example.service.MessageService;
-import java.util.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * TODO: You will need to write your own endpoints and handlers for your controller using Spring. The endpoints you will need can be
@@ -35,23 +33,25 @@ public class SocialMediaController {
     MessageService messageService;
 
     @DeleteMapping("/messages/{messageId}")
-    public  ResponseEntity <String> DeleteMessageById(@PathVariable int messageId ){
-  
+    public  ResponseEntity <?> DeleteMessageById(@PathVariable int messageId ){
         return messageService.DeleteMessagebyId(messageId);
     }
 
     @PostMapping("/messages")
-    public ResponseEntity<Message> createNewMessage(@RequestBody Integer userId, String message) {
+    public ResponseEntity<Message> createNewMessage(@RequestBody Message message) {
         try {
-            Message savedMessage = messageService.createNewMessage( userId, message);
-            return ResponseEntity.status(200).body(savedMessage);
+            Message savedMessage = messageService.createNewMessage(message);
+            if(savedMessage==null){
+                return ResponseEntity.status(400).build();
+            }else {
+                return ResponseEntity.status(200).body(savedMessage);
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(409).body(null);
+            return ResponseEntity.status(500).body(null);
         }
     }
     
-
     @PatchMapping("/messages/{messageId}")
     public ResponseEntity<Message> updateMessageById(
                                 @PathVariable Integer messageId, 
@@ -65,16 +65,27 @@ public class SocialMediaController {
             return ResponseEntity.status(409).body(null);
         }
     }
-        @GetMapping("/messages/{messageId}")
+    /*
+     ## 5: Our API should be able to retrieve a message by its ID.
+        GET request on the endpoint GET localhost:8080/messages/{messageId}.
+        The response body should contain a JSON representation of the message identified by the messageId.
+        It is expected for the response body to simply be empty if there is no such message. 
+        The response status should always be 200, which is the default.
+     */
+   
+
+
+    @GetMapping("/messages/{messageId}")
     public  ResponseEntity <Message> GetMessageById(int messageId ){
         try{
-            Message message = messageService.GetMessageById(messageId);
+            Message message = messageService.getMessageById(messageId);
             return ResponseEntity.ok(message);
         }catch(Exception e){
             e.printStackTrace();
             return ResponseEntity.status(400).body(null);
         }
     }
+
     @GetMapping("/messages")
     public  ResponseEntity <List<Message>> getAllMessages( ){
         try{
@@ -85,29 +96,25 @@ public class SocialMediaController {
             return ResponseEntity.status(400).body(null);
         }
     }
+
     @GetMapping("/accounts/{accountId}/messages")
-    public  ResponseEntity <Optional<Message>> getAllMessagesByUserId( Integer accountId){
+    public  ResponseEntity<List<Message>> getAllMessagesByUserId(@PathVariable Integer accountId){
         try{
-            Optional<Message> messages = messageService.getAllMessagesByUserId(accountId);
+           List<Message> messages = messageService.getMessagesByUserId(accountId);
             return ResponseEntity.ok(messages);
         }catch(Exception e){
             e.printStackTrace();
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(200).build();
         }
     }
-
-
-
-
-
     @PostMapping("/register")
-    public ResponseEntity <Account> userRegistration(@RequestBody Account account){
+    public ResponseEntity <Account> userRegister(@RequestBody Account account){
          try{
-             Account createdAccount= accountService.userRegistration(account);
+             Account createdAccount= accountService.userRegister(account);
              if(createdAccount!=null){
                  return ResponseEntity.ok(createdAccount);
              }
-             return ResponseEntity.status(409).build();
+             return ResponseEntity.status(200).build();
          }catch(Exception e){
              e.printStackTrace();
          }
@@ -126,7 +133,7 @@ public class SocialMediaController {
             return ResponseEntity.status(200).build();
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(501).build();
+            return ResponseEntity.status(401).build();
         }
        
     }

@@ -1,21 +1,14 @@
-// package com.example.service;
-
-// import org.springframework.stereotype.Service;
-
-// @Service
-// public class MessageService {
-// }
 package com.example.service;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.*;
+import com.example.entity.Message;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import java.util.*;
-import javax.persistence.EntityNotFoundException;
-import com.example.entity.Message;
-import com.example.exception.UnauthorizedException;
-import com.example.repository.MessageRepository;
 
+
+import javax.persistence.EntityNotFoundException;
+import com.example.repository.MessageRepository;
+import com.example.exception.UnauthorizedException;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class MessageService {
@@ -26,20 +19,18 @@ public class MessageService {
         this.messageRepository= messageRepository;
     }
 
-    public Message createNewMessage(Integer postedById, String messageText) {
-        if (messageText == null || messageText.isEmpty()) {
-            throw new IllegalArgumentException("Message text cannot be empty.");
+    public Message createNewMessage(Message message) {
+
+        if (message.getMessageText().isBlank() || message.getMessageText().length() > 255) {
+            throw new IllegalArgumentException("Invalid message text!");
         }
-        Message newMessage = new Message();
-        newMessage.setPostedBy(postedById);
-        newMessage.setMessageText(messageText);
-        newMessage.setTimePostedEpoch(System.currentTimeMillis());
+        // Message newMessage = new Message();
+        // newMessage.setPostedBy(postedById);
+        // newMessage.setMessageText(messageText);
+        // newMessage.setTimePostedEpoch(System.currentTimeMillis());
 
-    return messageRepository.save(newMessage);
-}
-
-        
-    
+        return messageRepository.save(message);
+    }
     public List<Message> GetAllMessages(){
         List<Message> messages = messageRepository.findAll();
         if (messages.isEmpty()) {
@@ -47,40 +38,27 @@ public class MessageService {
         }
         return messages;
     }
-
-
-    public Message GetMessageById(int messageId){
-       Message message= messageRepository.getById(messageId);
-       return message;
+    public Message getMessageById(int messageId) {
+        return messageRepository.findById(messageId)
+                .orElseThrow(() -> new EntityNotFoundException("Message not found with ID: " + messageId));
     }
-    public ResponseEntity<String> DeleteMessagebyId(int idToBeDeleted){
     
-        if (!messageRepository.existsById(idToBeDeleted)) {
-            throw new EntityNotFoundException("Message with ID " + idToBeDeleted + " not found.");
-        }
-
-        messageRepository.deleteById(idToBeDeleted);
-        return ResponseEntity.ok("Message deleted successfully.");
-    }
-
-
-   
-    public Message UpdateMessagebyId(Integer messageId, Integer accountId, Message updatedMessage){
-        messageRepository.getById(messageId);
-        return null;
-    }
-   
-    public  Optional<Message> getAllMessagesByUserId(int userId) {
-        Optional<Message> messages = messageRepository.findById(userId);
-        
-        if (messages.isEmpty()) {
-            throw new EntityNotFoundException("No messages found for user ID: " + userId);
-        }
     
+    public ResponseEntity<Integer> DeleteMessagebyId(Integer messageId){
+        if (!messageRepository.existsById(messageId)) {
+            return ResponseEntity.ok().build();
+        }
+        messageRepository.deleteById(messageId);
+        return ResponseEntity.ok(1);
+    }
+    public  List<Message> getMessagesByUserId(Integer userId) {
+
+        List<Message> messages = messageRepository.findByPostedBy(userId);
+        // if (messages.isEmpty()) {
+        //     throw new EntityNotFoundException("No messages found for user ID: " + userId);
+        // }
         return messages;
     }
-    
-   
     public Message updateMessageById(Integer messageId, Integer accountId, Message updatedMessage) {
         Message currMessage = messageRepository.findById(messageId)
                 .orElseThrow(() -> new EntityNotFoundException("Message not found"));
@@ -96,9 +74,7 @@ public class MessageService {
         if (updatedMessage.getTimePostedEpoch()!= null) {
             currMessage.setTimePostedEpoch(updatedMessage.getTimePostedEpoch());
         }
-    
         return messageRepository.save(currMessage);
     }
   
-    
 }
