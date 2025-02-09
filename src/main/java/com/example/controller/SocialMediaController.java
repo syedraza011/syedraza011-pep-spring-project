@@ -48,23 +48,21 @@ public class SocialMediaController {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body(null);
+            return ResponseEntity.status(400).body(null);
         }
     }
     
     @PatchMapping("/messages/{messageId}")
-    public ResponseEntity<Message> updateMessageById(
-                                @PathVariable Integer messageId, 
-                                @RequestParam Integer accountId,
-                             @RequestBody Message updatedMessage) {
-        try {
-            Message message = messageService.updateMessageById(messageId, accountId, updatedMessage);
-            return ResponseEntity.ok(message);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(409).body(null);
+    public ResponseEntity<Integer>  updateMessageById(
+                        @PathVariable Integer messageId,
+                        @RequestBody Message message) {
+       if (messageService.updateMessageById(messageId, message.getMessageText()) && !message.getMessageText().isEmpty()) {
+            return ResponseEntity.ok(1);
+        } else {
+            return ResponseEntity.status(400).body(null);
         }
     }
+    
     /*
      ## 5: Our API should be able to retrieve a message by its ID.
         GET request on the endpoint GET localhost:8080/messages/{messageId}.
@@ -73,16 +71,14 @@ public class SocialMediaController {
         The response status should always be 200, which is the default.
      */
    
-
-
     @GetMapping("/messages/{messageId}")
-    public  ResponseEntity <Message> GetMessageById(int messageId ){
+    public  ResponseEntity <Message> GetMessageById(@PathVariable Integer messageId ){
         try{
             Message message = messageService.getMessageById(messageId);
             return ResponseEntity.ok(message);
         }catch(Exception e){
             e.printStackTrace();
-            return ResponseEntity.status(400).body(null);
+            return ResponseEntity.status(200).build();
         }
     }
 
@@ -116,9 +112,9 @@ public class SocialMediaController {
              }
              return ResponseEntity.status(200).build();
          }catch(Exception e){
-             e.printStackTrace();
+              return ResponseEntity.status(e.getMessage().equals("username already exist!") ? 409 : 400).build();
          }
-         return null;
+        
      }
     @PostMapping("/login")
     public ResponseEntity<Account> loginUser(@RequestBody Account account) {
